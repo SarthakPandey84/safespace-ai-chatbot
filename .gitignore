@@ -1,0 +1,61 @@
+# ==============================================================================
+# FILE: .gitignore
+# PURPOSE: Tells Git which files to NEVER track or commit.
+#
+# ACADEMIC NOTE — Why .gitignore matters for this project specifically:
+#   This project has three categories of sensitive files that must NEVER
+#   enter version control:
+#     1. SECRETS:  .env contains the Gemini API key. A leaked key can result
+#                  in unauthorized API usage and unexpected charges.
+#     2. USER DATA: safespace.db contains chat logs. Even though they are
+#                  anonymized, committing a research database to a public
+#                  repo would be an ethical and potentially legal violation.
+#     3. BLOAT:    Python cache files, virtual environments, and OS files
+#                  have no place in a repository and inflate its size.
+# ==============================================================================
+
+# --- Secrets (CRITICAL) ---
+.env
+*.env
+
+# --- User Data / Database (CRITICAL) ---
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Virtual Environments ---
+venv/
+env/
+.venv/
+ENV/
+
+# --- SpaCy Models (large, downloaded separately) ---
+# These are downloaded via: python -m spacy download en_core_web_lg
+*.tar.gz
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Streamlit ---
+.streamlit/secrets.toml
