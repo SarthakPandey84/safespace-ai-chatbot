@@ -41,9 +41,9 @@ st.markdown("""
         padding: 1rem 1.25rem;
         box-shadow: 0 2px 8px rgba(44,36,32,0.06);
     }
-    h1 { font-family: 'Lora', serif !important; color: #2c2420 !important; }
-    h2 { font-family: 'Lora', serif !important; color: #3d3530 !important; }
-    h3 { font-family: 'DM Sans', sans-serif !important; color: #4a3f39 !important; }
+    h1 { font-family: 'Lora', serif !important; color: #0f0a08 !important; font-weight: 700 !important; }
+    h2 { font-family: 'Lora', serif !important; color: #1a1008 !important; font-weight: 600 !important; }
+    h3 { font-family: 'DM Sans', sans-serif !important; color: #2e2018 !important; font-weight: 600 !important; }
     [data-testid="stSidebar"] { background: linear-gradient(180deg, #231f1c 0%, #1a1614 100%); }
     .privacy-notice {
         background: rgba(58, 107, 139, 0.08);
@@ -114,7 +114,7 @@ CHART_COLORS = {
     "muted":      "#a89588",
     "background": "#f7f3ee",
     "grid":       "#e0d8d0",
-    "text":       "#4a3f39",
+    "text":       "#2e2018",
 }
 
 EMOTION_COLORS = {
