@@ -33,29 +33,149 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-    html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+
+    html, body, [class*="css"] {
+        background-color: #eef6f2 !important;
+        font-family: 'DM Sans', sans-serif;
+        color: #0a0604 !important;
+    }
+
+    .stApp, .block-container {
+        background-color: #eef6f2 !important;
+    }
+
+    p, span, div, li, label, caption, small, strong, em, a {
+        color: #0a0604 !important;
+    }
+
+    h1 {
+        font-family: 'Lora', serif !important;
+        color: #0a0604 !important;
+        font-weight: 800 !important;
+        font-size: 2rem !important;
+    }
+    h2 {
+        font-family: 'Lora', serif !important;
+        color: #0a0604 !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+    }
+    h3 {
+        font-family: 'DM Sans', sans-serif !important;
+        color: #0a0604 !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+
     [data-testid="metric-container"] {
-        background: linear-gradient(135deg, #f7f3ee 0%, #f0ebe2 100%);
-        border: 1px solid #e0d8d0;
+        background: linear-gradient(135deg, #eef6f2 0%, #e6f2ee 100%);
+        border: 1.5px solid #b0d0c4;
         border-radius: 12px;
         padding: 1rem 1.25rem;
-        box-shadow: 0 2px 8px rgba(44,36,32,0.06);
+        box-shadow: 0 2px 8px rgba(44,36,32,0.10);
     }
-    h1 { font-family: 'Lora', serif !important; color: #0f0a08 !important; font-weight: 700 !important; }
-    h2 { font-family: 'Lora', serif !important; color: #1a1008 !important; font-weight: 600 !important; }
-    h3 { font-family: 'DM Sans', sans-serif !important; color: #2e2018 !important; font-weight: 600 !important; }
-    [data-testid="stSidebar"] { background: linear-gradient(180deg, #231f1c 0%, #1a1614 100%); }
+
+    [data-testid="metric-container"] label,
+    [data-testid="stMetricLabel"] {
+        color: #0a0604 !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #0a0604 !important;
+        font-weight: 800 !important;
+        font-size: 2rem !important;
+    }
+
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] li {
+        color: #0a0604 !important;
+        font-size: 1rem !important;
+    }
+
+    .stCaption, [data-testid="stCaptionContainer"] p {
+        color: #2e2018 !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #231f1c 0%, #1a1614 100%);
+    }
+
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] small {
+        color: #f0e8e0 !important;
+    }
+
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] strong {
+        color: #ffffff !important;
+    }
+
     .privacy-notice {
-        background: rgba(58, 107, 139, 0.08);
-        border: 1px solid rgba(58, 107, 139, 0.2);
+        background: rgba(26, 80, 120, 0.12);
+        border: 1.5px solid rgba(26, 80, 120, 0.3);
         border-radius: 8px;
         padding: 0.75rem 1rem;
-        font-size: 0.85rem;
-        color: #4a6b7c;
+        font-size: 0.875rem;
+        color: #0a3050 !important;
+        font-weight: 600;
         margin-bottom: 1rem;
     }
-    .section-divider { border: none; border-top: 1px solid #e0d8d0; margin: 1.5rem 0; }
-    [data-testid="stDataFrame"] { border-radius: 8px; overflow: hidden; }
+
+    .privacy-notice strong {
+        color: #0a3050 !important;
+    }
+
+    .section-divider {
+        border: none;
+        border-top: 2px solid #a8c8bc;
+        margin: 1.5rem 0;
+    }
+
+    [data-testid="stDataFrame"] {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    [data-testid="stDataFrame"] td,
+    [data-testid="stDataFrame"] th {
+        color: #0a0604 !important;
+        font-weight: 500 !important;
+    }
+
+    .stSelectbox label,
+[data-testid="stDownloadButton"] button {
+        background-color: #2d7a3a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 0.5rem 1.25rem !important;
+        font-size: 0.9rem !important;
+    }
+
+    [data-testid="stDownloadButton"] button:hover {
+        background-color: #1a5e28 !important;
+        color: #ffffff !important;
+    }
+    .stDateInput label,
+    .stCheckbox label {
+        color: #f0e8e0 !important;
+        font-weight: 600 !important;
+    }
+
+    button[kind="secondary"] {
+        color: #0a0604 !important;
+        font-weight: 600 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -112,9 +232,9 @@ CHART_COLORS = {
     "primary":    "#7c9e82",
     "accent":     "#c9956a",
     "muted":      "#a89588",
-    "background": "#f7f3ee",
-    "grid":       "#e0d8d0",
-    "text":       "#2e2018",
+    "background": "#f0f7f4",
+    "grid":       "#b8d4c8",
+    "text":       "#0a0604",
 }
 
 EMOTION_COLORS = {
@@ -136,9 +256,10 @@ EMOTION_COLORS = {
 PLOTLY_LAYOUT_DEFAULTS = dict(
     paper_bgcolor = "rgba(0,0,0,0)",
     plot_bgcolor  = CHART_COLORS["background"],
-    font          = dict(family="DM Sans", color=CHART_COLORS["text"]),
+    font          = dict(family="DM Sans", color="#0a0604", size=13),
     margin        = dict(t=40, b=40, l=20, r=20),
-    hoverlabel    = dict(bgcolor="white", font_size=13),
+    hoverlabel    = dict(bgcolor="white", font_size=13, font_color="#0a0604"),
+    legend        = dict(font=dict(color="#0a0604", size=12)),
 )
 
 
@@ -330,8 +451,8 @@ else:
         fig_bar.update_layout(
             **PLOTLY_LAYOUT_DEFAULTS,
             height = 340,
-            xaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Number of Messages"),
-            yaxis  = dict(showgrid=False),
+            xaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Number of Messages", tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+            yaxis  = dict(showgrid=False, tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -370,8 +491,8 @@ with col_timeline:
         fig_timeline.update_layout(
             **PLOTLY_LAYOUT_DEFAULTS,
             height = 300,
-            xaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Date"),
-            yaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Message Count", rangemode="tozero"),
+            xaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Date", tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+            yaxis  = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Message Count", rangemode="tozero", tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
         )
         st.plotly_chart(fig_timeline, use_container_width=True)
 
@@ -402,7 +523,7 @@ with col_hourly:
                 ticktext = [f"{h:02d}:00" for h in range(0, 24, 3)],
                 showgrid = False,
             ),
-            yaxis = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Messages"),
+            yaxis = dict(showgrid=True, gridcolor=CHART_COLORS["grid"], title="Messages", tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
         )
         st.plotly_chart(fig_hourly, use_container_width=True)
 
@@ -434,8 +555,8 @@ with col_turns:
         fig_turns.update_layout(
             **PLOTLY_LAYOUT_DEFAULTS,
             height     = 280,
-            xaxis      = dict(title="Turns per Session", showgrid=False),
-            yaxis      = dict(title="Session Count", showgrid=True, gridcolor=CHART_COLORS["grid"]),
+            xaxis      = dict(title="Turns per Session", showgrid=False, tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+            yaxis      = dict(title="Session Count", showgrid=True, gridcolor=CHART_COLORS["grid"], tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
             showlegend = False,
         )
         st.plotly_chart(fig_turns, use_container_width=True)
@@ -469,8 +590,8 @@ with col_pii:
         fig_pii.update_layout(
             **PLOTLY_LAYOUT_DEFAULTS,
             height     = 280,
-            xaxis      = dict(title="PII Risk Category", showgrid=False),
-            yaxis      = dict(title="Sessions", showgrid=True, gridcolor=CHART_COLORS["grid"]),
+            xaxis      = dict(title="PII Risk Category", showgrid=False, tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+            yaxis      = dict(title="Sessions", showgrid=True, gridcolor=CHART_COLORS["grid"], tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
             showlegend = False,
         )
         st.plotly_chart(fig_pii, use_container_width=True)
@@ -492,8 +613,8 @@ with col_duration:
         fig_dur.update_layout(
             **PLOTLY_LAYOUT_DEFAULTS,
             height = 280,
-            yaxis  = dict(title="Duration (minutes)", showgrid=True, gridcolor=CHART_COLORS["grid"]),
-            xaxis  = dict(showticklabels=False),
+            yaxis  = dict(title="Duration (minutes)", showgrid=True, gridcolor=CHART_COLORS["grid"], tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+            xaxis  = dict(showticklabels=False, tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
         )
         st.plotly_chart(fig_dur, use_container_width=True)
 
@@ -551,8 +672,8 @@ if not df_logs.empty and "response_latency_ms" in df_logs.columns:
             fig_lat.update_layout(
                 **PLOTLY_LAYOUT_DEFAULTS,
                 height = 260,
-                xaxis  = dict(title="Time", showgrid=True, gridcolor=CHART_COLORS["grid"]),
-                yaxis  = dict(title="Latency (ms)", showgrid=True, gridcolor=CHART_COLORS["grid"]),
+                xaxis  = dict(title="Time", showgrid=True, gridcolor=CHART_COLORS["grid"], tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
+                yaxis  = dict(title="Latency (ms)", showgrid=True, gridcolor=CHART_COLORS["grid"], tickfont=dict(color="#0a0604", size=12), title_font=dict(color="#0a0604", size=13)),
             )
             st.plotly_chart(fig_lat, use_container_width=True)
 

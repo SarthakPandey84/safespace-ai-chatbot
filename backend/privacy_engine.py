@@ -176,6 +176,32 @@ class PrivacyEngine:
         # appropriate for our use case.
         self.analyzer  = AnalyzerEngine()
 
+        # Custom Aadhaar pattern recognizer — added because Presidio's built-in
+        # IN_AADHAAR recognizer misses many common formats. This covers both
+        # spaced (1234 5678 9012) and plain (123456789012) 12-digit formats.
+        from presidio_analyzer import PatternRecognizer, Pattern
+        aadhaar_recognizer = PatternRecognizer(
+            supported_entity = "IN_AADHAAR",
+            patterns = [
+                Pattern(
+                    name  = "aadhaar_spaced",
+                    regex = r"\b[0-9]{4}\s[0-9]{4}\s[0-9]{4}\b",
+                    score = 0.95
+                ),
+                Pattern(
+                    name  = "aadhaar_plain",
+                    regex = r"\b[0-9]{12}\b",
+                    score = 0.75
+                ),
+                Pattern(
+                    name  = "aadhaar_hyphen",
+                    regex = r"\b[0-9]{4}-[0-9]{4}-[0-9]{4}\b",
+                    score = 0.95
+                ),
+            ]
+        )
+        self.analyzer.registry.add_recognizer(aadhaar_recognizer)
+
         # AnonymizerEngine is stateless and lightweight — it just applies
         # string replacement rules based on the Analyzer's output.
         self.anonymizer = AnonymizerEngine()
