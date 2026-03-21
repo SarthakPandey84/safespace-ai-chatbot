@@ -1,140 +1,22 @@
-# ==============================================================================
-# FILE: requirements.txt
-# PROJECT: SafeSpace AI - Empathetic Privacy-First Chatbot
-# PURPOSE: Defines all Python dependencies with pinned versions.
-#
-# ACADEMIC NOTE (Reproducibility):
-#   Pinning exact versions (using ==) is a software engineering best practice.
-#   It guarantees that anyone who clones this project — including faculty
-#   evaluators — gets the EXACT same environment. Unpinned dependencies
-#   (e.g., "fastapi" without a version) can silently break across installations,
-#   which is unacceptable in a defensible academic or production project.
-#
-# HOW TO INSTALL:
-#   1. Create a virtual environment:  python -m venv venv
-#   2. Activate it:                   source venv/bin/activate  (Linux/Mac)
-#                                     venv\Scripts\activate     (Windows)
-#   3. Install all dependencies:      pip install -r requirements.txt
-# ==============================================================================
-
-
-# ------------------------------------------------------------------------------
-# SECTION 1: WEB FRAMEWORK & SERVER
-# ------------------------------------------------------------------------------
-
-# FastAPI: Our core backend framework. Chosen over Flask for its native support
-# for async/await (critical for non-blocking AI API calls), automatic OpenAPI
-# docs generation (/docs endpoint), and first-class Pydantic integration for
-# data validation. This is the industry standard for modern Python APIs.
+# Web Framework & Server
 fastapi==0.115.6
-
-# Uvicorn: The ASGI (Asynchronous Server Gateway Interface) server that runs
-# FastAPI. ASGI is the async successor to WSGI — required for FastAPI to
-# handle concurrent requests efficiently (e.g., multiple users chatting at once).
-# The [standard] extra includes performance-boosting dependencies like httptools.
 uvicorn[standard]==0.32.1
-
-# Python-Multipart: Required by FastAPI to parse form data. While our primary
-# communication is JSON, this is needed as a base dependency for certain
-# FastAPI features and future extensibility (e.g., file uploads).
 python-multipart==0.0.20
-
-# Pydantic: Data validation library. Used to define strict schemas for all API
-# request and response bodies (see backend/models.py). FastAPI is built on top
-# of Pydantic — it automatically validates incoming JSON against our schemas
-# and returns clear 422 errors if data is malformed. This is our first line of
-# defense against bad input data.
-# NOTE: Pydantic v2 (>=2.0) is a Rust-based rewrite and significantly faster.
 pydantic==2.10.4
-
-# Python-Dotenv: Loads environment variables from a .env file into os.environ.
-# This is how we inject secrets (like the Gemini API key) without ever
-# hardcoding them into source files — a core principle of secure development
-# and the 12-Factor App methodology.
 python-dotenv==1.0.1
 
+# AI Engine
+groq==1.1.1
 
-# ------------------------------------------------------------------------------
-# SECTION 2: AI / NLP ENGINE
-# ------------------------------------------------------------------------------
-
-# Google Generative AI SDK: The official Python client for Google's Gemini API.
-# This is our AI inference engine — the library that sends prompts to the
-# Gemini model and receives empathetic, context-aware responses.
-google-generativeai==0.8.3
-
-
-# ------------------------------------------------------------------------------
-# SECTION 3: PRIVACY & ANONYMIZATION ENGINE
-# ------------------------------------------------------------------------------
-
-# Microsoft Presidio Analyzer: The NLP-based engine that DETECTS PII entities
-# (names, phone numbers, emails, locations, etc.) in raw text using Named Entity
-# Recognition (NER) models. This runs entirely on our server — no data sent
-# to any external service during PII detection.
-# ARCHITECTURE NOTE: The "analyze" step identifies WHAT is PII and WHERE it is.
+# Privacy & Anonymization
 presidio-analyzer==2.2.356
-
-# Microsoft Presidio Anonymizer: Takes the detection results from the Analyzer
-# and REPLACES the identified PII spans with placeholder tags (e.g., <PERSON>).
-# ARCHITECTURE NOTE: The "anonymize" step performs the actual text transformation.
-# Separating detection from anonymization follows the Single Responsibility
-# Principle and allows us to customize replacement strategies independently.
 presidio-anonymizer==2.2.356
-
-# SpaCy: The industrial-strength NLP library that Presidio uses under the hood
-# for its Named Entity Recognition models. We pin this version for compatibility.
-# IMPORTANT: After installing, you MUST download the English language model:
-#   python -m spacy download en_core_web_lg
-# We use 'lg' (large) over 'sm' (small) for significantly better NER accuracy,
-# which is critical for a privacy-focused application. The tradeoff is disk space
-# (~750MB vs ~12MB), which is an acceptable cost for our Privacy-by-Design mandate.
 spacy==3.8.4
 
-
-# ------------------------------------------------------------------------------
-# SECTION 4: DATABASE
-# ------------------------------------------------------------------------------
-
-# SQLite is part of Python's standard library (import sqlite3) — NO extra
-# package is needed. This is a deliberate MVP choice: zero infrastructure,
-# zero configuration, single file database.
-#
-# ACADEMIC NOTE (Scalability Discussion):
-#   For a production system, we would replace SQLite with PostgreSQL and use
-#   an async ORM like SQLAlchemy (with asyncpg driver). The database.py module
-#   is designed with this migration in mind — all DB logic is encapsulated
-#   behind a clean interface, so only that one file would need to change.
-
-
-# ------------------------------------------------------------------------------
-# SECTION 5: RESEARCH DASHBOARD
-# ------------------------------------------------------------------------------
-
-# Streamlit: Turns Python scripts into interactive web dashboards with minimal
-# boilerplate. Chosen for the research dashboard because it allows data
-# scientists and researchers to visualize anonymized behavioral data without
-# needing frontend development skills — perfectly aligned with the academic
-# research use case of this project.
+# Research Dashboard
 streamlit==1.41.1
-
-# Pandas: The foundational data manipulation library. Used in dashboard.py to
-# load data from SQLite into DataFrames for aggregation, filtering, and analysis
-# before passing it to visualization libraries.
 pandas==2.2.3
-
-# Plotly: Interactive charting library. Integrates seamlessly with Streamlit
-# to produce publication-quality, interactive charts (hover, zoom, filter)
-# for the research dashboard. Chosen over Matplotlib for its interactivity,
-# which makes the dashboard more compelling during a project demonstration.
 plotly==5.24.1
 
-
-# ------------------------------------------------------------------------------
-# SECTION 6: UTILITIES & CROSS-CUTTING CONCERNS
-# ------------------------------------------------------------------------------
-
-# Httpx: A modern, async-capable HTTP client. Used as a utility for any
-# internal HTTP calls. Also the recommended test client for FastAPI applications
-# (used with pytest for integration testing in a production-grade setup).
+# Utilities
 httpx==0.28.1
