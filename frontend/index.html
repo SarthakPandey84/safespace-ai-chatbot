@@ -1,44 +1,8 @@
 <!DOCTYPE html>
-<!--
-  FILE: frontend/index.html
-  PROJECT: SafeSpace AI - Empathetic Privacy-First Chatbot
-  PURPOSE: The main chat interface markup. Intentionally uses semantic HTML5
-           for accessibility compliance — screen readers and assistive
-           technologies depend on correct semantic structure.
-
-  DESIGN PHILOSOPHY — Trauma-Informed UI:
-    Every visual decision in this interface is guided by trauma-informed
-    design principles:
-      - Soft, warm colors reduce anxiety (vs. clinical blues/whites)
-      - Ample negative space prevents cognitive overload
-      - Clear, gentle typography avoids harsh readability strain
-      - Subtle animations provide feedback without startling the user
-      - Privacy indicators (the shield badge) provide psychological safety
-
-  ACADEMIC NOTE — Vanilla JS Choice:
-    This frontend uses zero JavaScript frameworks (no React, Vue, or Angular).
-    This is intentional: every line of logic is transparent and readable by
-    any faculty reviewer without framework-specific knowledge. It also
-    eliminates a large dependency tree, making the project more portable
-    and demonstrating core JS competency.
--->
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <!-- Viewport meta is essential for mobile responsiveness -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!--
-      Content Security Policy (CSP):
-      ACADEMIC NOTE — CSP as a Security Header:
-        CSP is an HTTP-level defense against Cross-Site Scripting (XSS) attacks.
-        It tells the browser which sources of scripts, styles, and fonts are
-        trusted. Any injected malicious script from an untrusted source is
-        blocked by the browser automatically.
-        For a mental health app handling sensitive conversations, XSS prevention
-        is especially critical — an attacker injecting a script could silently
-        read the chat messages.
-    -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
                    script-src 'self';
@@ -49,29 +13,15 @@
     <title>SafeSpace — A Place to Breathe</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
 
-    <!-- Google Fonts: Lora (warm serif for headings) + DM Sans (clean for body) -->
-    <!-- DESIGN NOTE: Lora's warm, humanist serifs communicate warmth and trust.
-         DM Sans is highly legible at small sizes — critical for chat bubbles. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-
     <link rel="stylesheet" href="/static/style.css" />
 </head>
 
 <body>
-
-    <!--
-      LAYOUT STRUCTURE:
-        .app-shell         → Full-viewport wrapper, centers everything
-          .sidebar         → Left panel: branding, privacy info, session controls
-          .chat-container  → Right panel: the actual conversation interface
-    -->
     <div class="app-shell">
 
-        <!-- ================================================================
-             SIDEBAR — Branding, Privacy Trust Indicators, Session Info
-             ================================================================ -->
         <aside class="sidebar" role="complementary" aria-label="SafeSpace information panel">
 
             <div class="sidebar-brand">
@@ -80,14 +30,6 @@
                 <p class="brand-tagline">A place to breathe, reflect,<br/>and be heard.</p>
             </div>
 
-            <!-- Privacy Trust Indicators
-                 ACADEMIC NOTE: "Privacy Trust Indicators" are UI elements
-                 designed to build user confidence in the system's privacy
-                 practices. Research in HCI shows that explicit privacy
-                 reassurances reduce anxiety and increase willingness to
-                 share genuinely — directly improving the quality of data
-                 for our research dashboard. They are not decorative;
-                 they serve a functional research purpose. -->
             <div class="privacy-panel" role="note" aria-label="Privacy information">
                 <div class="privacy-header">
                     <span class="privacy-shield" aria-hidden="true">🔒</span>
@@ -113,7 +55,6 @@
                 </ul>
             </div>
 
-            <!-- Session Information Display -->
             <div class="session-panel">
                 <p class="session-label">Your anonymous session</p>
                 <p class="session-id" id="session-id-display" aria-live="polite">
@@ -121,7 +62,6 @@
                 </p>
             </div>
 
-            <!-- New Conversation Button -->
             <button
                 class="btn-new-chat"
                 id="btn-new-chat"
@@ -130,12 +70,6 @@
                 ✦ New Conversation
             </button>
 
-            <!-- Crisis Resources — Always Visible
-                 ACADEMIC NOTE: These resources are placed in the sidebar
-                 (not in the chat) so they are ALWAYS visible regardless of
-                 scroll position. A user in distress must never have to hunt
-                 for help. This is a trauma-informed design principle:
-                 "make the exit visible at all times." -->
             <div class="crisis-panel" role="note" aria-label="Crisis resources">
                 <p class="crisis-title">Need immediate support?</p>
                 <a href="tel:9152987821" class="crisis-link" aria-label="Call iCall India helpline">
@@ -148,12 +82,8 @@
 
         </aside>
 
-        <!-- ================================================================
-             MAIN CHAT CONTAINER
-             ================================================================ -->
         <main class="chat-container" role="main">
 
-            <!-- Chat Header -->
             <header class="chat-header" role="banner">
                 <div class="chat-header-left">
                     <div class="ai-avatar" aria-hidden="true">
@@ -166,13 +96,6 @@
                     </div>
                 </div>
                 <div class="chat-header-right">
-                    <!-- Emotion Indicator: Shows the detected emotional state
-                         of the current conversation in real-time.
-                         ACADEMIC NOTE: Surfacing the detected emotion to the
-                         user serves two purposes:
-                           1. Transparency — the user knows the AI understands them.
-                           2. Reflection — seeing their emotion named can itself
-                              be a therapeutic intervention (emotional labelling). -->
                     <div class="emotion-badge" id="emotion-badge" aria-live="polite" aria-label="Detected emotion">
                         <span class="emotion-icon" id="emotion-icon">✦</span>
                         <span class="emotion-text" id="emotion-text">Listening...</span>
@@ -180,7 +103,6 @@
                 </div>
             </header>
 
-            <!-- Message Thread — The Conversation Display Area -->
             <section
                 class="message-thread"
                 id="message-thread"
@@ -188,12 +110,8 @@
                 aria-live="polite"
                 aria-label="Conversation messages"
                 aria-relevant="additions">
-
-                <!-- Welcome message injected by JS on load -->
-
             </section>
 
-            <!-- Typing Indicator — Shows while waiting for AI response -->
             <div class="typing-indicator" id="typing-indicator" aria-live="polite" aria-label="AI is composing a response" hidden>
                 <div class="typing-bubble">
                     <span class="typing-dot"></span>
@@ -203,7 +121,6 @@
                 <span class="typing-label">SafeSpace is listening...</span>
             </div>
 
-            <!-- Message Input Area -->
             <footer class="input-area" role="contentinfo">
                 <div class="input-wrapper">
                     <textarea
@@ -220,27 +137,13 @@
                     </textarea>
 
                     <div class="input-footer">
-                        <!-- Character counter: feedback to prevent hitting the 2000 char limit -->
                         <span class="char-counter" id="char-counter" aria-live="polite">
                             <span id="char-count">0</span>/2000
                         </span>
-
-                        <!-- PII Notice: Inline reminder of the anonymization layer
-                             ACADEMIC NOTE: This "just-in-time" privacy notice
-                             appears directly at the point of data entry — exactly
-                             where the user decides what to type. Research in
-                             privacy UX shows that contextual notices at the
-                             point of disclosure are far more effective than
-                             buried privacy policies. -->
                         <span class="pii-notice" id="pii-notice" aria-label="Privacy notice">
                             🔒 Personal details are automatically removed
                         </span>
-
-                        <button
-                            id="send-btn"
-                            class="send-btn"
-                            aria-label="Send message"
-                            disabled>
+                        <button id="send-btn" class="send-btn" aria-label="Send message" disabled>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                                 <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
                             </svg>
@@ -252,9 +155,7 @@
         </main>
     </div>
 
-    <!-- Notification Toast for system messages (e.g., session reset confirmation) -->
     <div class="toast" id="toast" role="alert" aria-live="assertive" hidden></div>
-
     <script src="/static/script.js"></script>
 </body>
 </html>

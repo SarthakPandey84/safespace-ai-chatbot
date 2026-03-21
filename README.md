@@ -1,7 +1,7 @@
 # 🌿 SafeSpace AI
 ### Empathetic, Privacy-First AI Chatbot for Behavioral Research
 
-> *A B.Tech Final Year Minor Project in Artificial Intelligence & Data Science*
+> *B.Tech Final Year Minor Project — Artificial Intelligence & Data Science*
 
 ---
 
@@ -20,7 +20,7 @@ academic mental health and HCI research.
 ## Architecture
 
 ```
-User Input → FastAPI Backend → Presidio Anonymization → Gemini AI → SQLite Logging
+User Input → FastAPI Backend → Presidio Anonymization → Groq AI → SQLite Logging
                                         ↑
                                PII destroyed here.
                                Never travels further.
@@ -36,7 +36,7 @@ Streamlit Dashboard ← reads anonymized data ← SQLite
 |---|---|---|
 | Frontend | HTML · CSS · Vanilla JS | Chat interface |
 | Backend API | FastAPI + Uvicorn | REST endpoints, session management |
-| AI Engine | Google Gemini 1.5 Flash | Empathetic response generation |
+| AI Engine | Groq (Llama 3.3 70B) | Empathetic response generation |
 | Anonymization | Microsoft Presidio + SpaCy | PII detection and scrubbing |
 | Database | SQLite | Anonymized chat log storage |
 | Dashboard | Streamlit + Plotly | Research data visualization |
@@ -51,8 +51,8 @@ git clone <your-repo-url>
 cd safe_space_ai
 
 python -m venv venv
-source venv/bin/activate        # Linux/Mac
-# venv\Scripts\activate         # Windows
+venv\Scripts\activate.bat        # Windows
+# source venv/bin/activate       # Linux/Mac
 
 pip install -r requirements.txt
 python -m spacy download en_core_web_lg
@@ -60,45 +60,63 @@ python -m spacy download en_core_web_lg
 
 ### 2. Configure Secrets
 ```bash
-cp .env.example .env
-# Edit .env and add your Gemini API key:
-# GEMINI_API_KEY=your_key_here
+copy .env.example .env
 ```
+
+Edit `.env` and add your API key:
+```
+GROQ_API_KEY=your_groq_key_here
+```
+
+Get a free Groq API key at: https://console.groq.com
 
 ### 3. Run the Backend (Terminal 1)
 ```bash
 uvicorn backend.main:app --reload --port 8000
 ```
-- Chat interface: http://localhost:8000
-- API docs (Swagger): http://localhost:8000/docs
-- Health check: http://localhost:8000/health
+
+| URL | Purpose |
+|---|---|
+| http://localhost:8000 | Chat interface |
+| http://localhost:8000/docs | API docs (Swagger) |
+| http://localhost:8000/health | Health check |
 
 ### 4. Run the Dashboard (Terminal 2)
 ```bash
 streamlit run dashboard/dashboard.py
 ```
-- Research dashboard: http://localhost:8501
+
+| URL | Purpose |
+|---|---|
+| http://localhost:8501 | Research dashboard |
+
+### 5. Validate Setup
+```bash
+python validate_setup.py
+```
 
 ---
 
 ## Project Structure
+
 ```
 safe_space_ai/
 ├── requirements.txt          # Pinned Python dependencies
 ├── .env.example              # Secrets template
 ├── .gitignore                # Excludes .env, *.db from git
+├── validate_setup.py         # Pre-demo setup verification script
 ├── backend/
-│   ├── main.py               # FastAPI app, all REST endpoints
+│   ├── main.py               # FastAPI app, all REST endpoints, crisis override
 │   ├── database.py           # SQLite schema + CRUD (Repository Pattern)
 │   ├── privacy_engine.py     # Presidio PII anonymization (Façade Pattern)
-│   ├── ai_engine.py          # Gemini API integration + empathy prompts
+│   ├── ai_engine.py          # Groq API integration + empathy system prompt
 │   └── models.py             # Pydantic request/response schemas
 ├── frontend/
 │   ├── index.html            # Chat UI markup (semantic HTML5 + ARIA)
 │   ├── style.css             # Trauma-informed UI design (WCAG 2.1 AA)
 │   └── script.js             # Vanilla JS: session mgmt, API calls, XSS safety
 ├── dashboard/
-│   └── dashboard.py         # Streamlit research analytics dashboard
+│   └── dashboard.py          # Streamlit research analytics dashboard
 └── data/                     # Auto-created at runtime (git-ignored)
     └── safespace.db          # SQLite database
 ```
@@ -112,6 +130,16 @@ safe_space_ai/
 - **Anonymized storage** — `<PERSON>`, `<PHONE_NUMBER>` placeholders stored, not real values
 - **Session expiry** — browser tab close = session UUID gone (sessionStorage)
 - **Fail-safe pipeline** — anonymization failure aborts the request; raw PII never leaks
+- **Crisis override** — server-side keyword detection guarantees helpline numbers are shown
+
+---
+
+## Crisis Safety Features
+
+If a user expresses distress or suicidal ideation, the system:
+1. Detects crisis keywords server-side (independent of AI response)
+2. Injects both helpline numbers directly into the response
+3. Always displays iCall India (9152987821) and Vandrevala Foundation (1860-2662-345)
 
 ---
 
@@ -122,3 +150,4 @@ safe_space_ai/
 - Rogerian Person-Centered Therapy principles
 - WCAG 2.1 Accessibility Guidelines
 - 12-Factor App Methodology — https://12factor.net/
+- Groq API — https://console.groq.com/docs

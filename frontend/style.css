@@ -1,78 +1,46 @@
-/*
- * FILE: frontend/style.css
- * PROJECT: SafeSpace AI - Empathetic Privacy-First Chatbot
- * PURPOSE: All visual styling for the chat interface.
- *
- * DESIGN LANGUAGE — "Warm Journal":
- *   Inspired by the feeling of writing in a leather-bound journal by
- *   a window. Warm parchment tones, soft shadows, gentle organic textures.
- *   Everything feels deliberate, unhurried, and human.
- *   The antithesis of a cold, clinical mental health app.
- *
- * ARCHITECTURE: CSS Custom Properties (variables) are declared in :root.
- *   Every color, spacing value, and font-size references a variable.
- *   This means the entire visual theme can be changed by editing ~20 lines.
- *   ACADEMIC NOTE: This is the CSS equivalent of a configuration file —
- *   separating design tokens from layout/component rules.
- *
- * ACCESSIBILITY (WCAG 2.1 AA):
- *   - All text/background color combinations meet 4.5:1 contrast ratio.
- *   - Focus-visible outlines are preserved for keyboard navigation.
- *   - Font sizes use rem (relative to browser root) not px, respecting
- *     user accessibility settings for larger text.
- *   - The `prefers-reduced-motion` media query disables animations for
- *     users who have requested reduced motion (e.g., vestibular disorders).
- */
-
-/* ============================================================================
-   SECTION 1: DESIGN TOKENS (CSS Custom Properties)
-   ============================================================================ */
 :root {
-    /* --- Color Palette: Warm Parchment & Sage --- */
-    --color-bg-deep:       #1a1614;   /* Deepest background: rich dark walnut */
-    --color-bg-mid:        #231f1c;   /* Sidebar background */
-    --color-bg-surface:    #2d2824;   /* Card/panel surfaces */
-    --color-bg-chat:       #f7f3ee;   /* Chat area: warm parchment */
-    --color-bg-input:      #fffcf8;   /* Input field: lightest warm white */
+    --color-bg-deep:       #1a1614;
+    --color-bg-mid:        #231f1c;
+    --color-bg-surface:    #2d2824;
+    --color-bg-chat:       #f7f3ee;
+    --color-bg-input:      #fffcf8;
 
-    --color-brand:         #7c9e82;   /* Primary: muted sage green */
-    --color-brand-light:   #a8c5ae;   /* Lighter sage for hover states */
-    --color-brand-dark:    #5a7a60;   /* Darker sage for active states */
-    --color-accent:        #c9956a;   /* Warm amber accent for highlights */
-    --color-accent-soft:   #e8c4a0;   /* Soft amber for tags/badges */
+    --color-brand:         #7c9e82;
+    --color-brand-light:   #a8c5ae;
+    --color-brand-dark:    #5a7a60;
+    --color-accent:        #c9956a;
+    --color-accent-soft:   #e8c4a0;
 
-    --color-text-primary:  #2c2420;   /* Dark warm brown — main body text */
-    --color-text-secondary:#6b5c52;   /* Medium warm brown — secondary text */
-    --color-text-muted:    #a89588;   /* Light warm brown — metadata/hints */
-    --color-text-light:    #f0ebe4;   /* Warm off-white — text on dark bg */
-    --color-text-sidebar:  #c8bdb6;   /* Light text for sidebar */
+    --color-text-primary:  #2c2420;
+    --color-text-secondary:#6b5c52;
+    --color-text-muted:    #a89588;
+    --color-text-light:    #f0ebe4;
+    --color-text-sidebar:  #c8bdb6;
 
-    --color-user-bubble:   #3d5c42;   /* User message bubble: deep sage */
-    --color-user-text:     #e8f2ea;   /* Text on user bubble */
-    --color-ai-bubble:     #ffffff;   /* AI message bubble: clean white */
-    --color-ai-text:       #2c2420;   /* Text on AI bubble */
+    --color-user-bubble:   #3d5c42;
+    --color-user-text:     #e8f2ea;
+    --color-ai-bubble:     #ffffff;
+    --color-ai-text:       #2c2420;
 
-    --color-border:        #e0d8d0;   /* Soft warm border */
-    --color-border-dark:   #3d3530;   /* Dark border for sidebar panels */
-    --color-shadow:        rgba(44, 36, 32, 0.12); /* Warm shadow */
+    --color-border:        #e0d8d0;
+    --color-border-dark:   #3d3530;
+    --color-shadow:        rgba(44, 36, 32, 0.12);
 
-    --color-crisis:        #8b3a3a;   /* Crisis panel: muted, serious red */
+    --color-crisis:        #8b3a3a;
     --color-crisis-bg:     rgba(139, 58, 58, 0.12);
-    --color-privacy:       #3a6b8b;   /* Privacy panel: calm trust blue */
+    --color-privacy:       #3a6b8b;
     --color-privacy-bg:    rgba(58, 107, 139, 0.12);
 
-    /* --- Typography --- */
-    --font-display:  'Lora', Georgia, serif;         /* Warm serif for headings */
-    --font-body:     'DM Sans', system-ui, sans-serif; /* Clean sans for UI/body */
+    --font-display: 'Lora', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
 
-    --text-xs:    0.75rem;   /* 12px */
-    --text-sm:    0.875rem;  /* 14px */
-    --text-base:  1rem;      /* 16px */
-    --text-lg:    1.125rem;  /* 18px */
-    --text-xl:    1.375rem;  /* 22px */
-    --text-2xl:   1.75rem;   /* 28px */
+    --text-xs:   0.75rem;
+    --text-sm:   0.875rem;
+    --text-base: 1rem;
+    --text-lg:   1.125rem;
+    --text-xl:   1.375rem;
+    --text-2xl:  1.75rem;
 
-    /* --- Spacing Scale --- */
     --space-1:  0.25rem;
     --space-2:  0.5rem;
     --space-3:  0.75rem;
@@ -83,28 +51,21 @@
     --space-10: 2.5rem;
     --space-12: 3rem;
 
-    /* --- Border Radius --- */
     --radius-sm:   6px;
     --radius-md:   12px;
     --radius-lg:   18px;
     --radius-xl:   24px;
     --radius-pill: 100px;
 
-    /* --- Transitions --- */
     --transition-fast:   0.15s ease;
     --transition-normal: 0.25s ease;
     --transition-slow:   0.4s ease;
 
-    /* --- Layout --- */
     --sidebar-width: 280px;
     --header-height: 72px;
     --input-height:  80px;
 }
 
-
-/* ============================================================================
-   SECTION 2: RESET & BASE STYLES
-   ============================================================================ */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -114,7 +75,6 @@
 html {
     height: 100%;
     font-size: 16px;
-    /* Smooth scrolling for accessibility */
     scroll-behavior: smooth;
 }
 
@@ -125,46 +85,23 @@ body {
     background-color: var(--color-bg-deep);
     color: var(--color-text-primary);
     line-height: 1.6;
-    /* Subtle noise texture overlay for warmth — applied via a pseudo-element */
     overflow: hidden;
 }
 
-/* Keyboard focus styles — never hide focus outlines (accessibility) */
 :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
 }
 
-/* Remove focus ring for mouse users only */
 :focus:not(:focus-visible) {
     outline: none;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
+a       { color: inherit; text-decoration: none; }
+ul      { list-style: none; }
+button  { cursor: pointer; border: none; background: none; font-family: inherit; }
+textarea { font-family: inherit; resize: none; }
 
-ul {
-    list-style: none;
-}
-
-button {
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-}
-
-textarea {
-    font-family: inherit;
-    resize: none;
-}
-
-
-/* ============================================================================
-   SECTION 3: APP SHELL LAYOUT
-   ============================================================================ */
 .app-shell {
     display: flex;
     height: 100vh;
@@ -172,10 +109,6 @@ textarea {
     overflow: hidden;
 }
 
-
-/* ============================================================================
-   SECTION 4: SIDEBAR
-   ============================================================================ */
 .sidebar {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
@@ -187,17 +120,13 @@ textarea {
     padding: var(--space-8) var(--space-5);
     overflow-y: auto;
     overflow-x: hidden;
-
-    /* Subtle inner shadow for depth */
     box-shadow: inset -1px 0 0 rgba(255,255,255,0.03);
 }
 
-/* Custom scrollbar for sidebar */
-.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar       { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--color-border-dark); border-radius: 2px; }
 
-/* --- Sidebar Brand --- */
 .sidebar-brand {
     text-align: center;
     padding-bottom: var(--space-5);
@@ -208,7 +137,6 @@ textarea {
     font-size: 2.5rem;
     display: block;
     margin-bottom: var(--space-3);
-    /* Gentle breathing animation */
     animation: breathe 4s ease-in-out infinite;
 }
 
@@ -234,7 +162,6 @@ textarea {
     font-family: var(--font-display);
 }
 
-/* --- Privacy Panel --- */
 .privacy-panel {
     background: var(--color-privacy-bg);
     border: 1px solid rgba(58, 107, 139, 0.25);
@@ -249,9 +176,7 @@ textarea {
     margin-bottom: var(--space-3);
 }
 
-.privacy-shield {
-    font-size: var(--text-base);
-}
+.privacy-shield { font-size: var(--text-base); }
 
 .privacy-title {
     font-size: var(--text-sm);
@@ -287,10 +212,7 @@ textarea {
     margin-top: 5px;
 }
 
-/* --- Session Panel --- */
-.session-panel {
-    text-align: center;
-}
+.session-panel { text-align: center; }
 
 .session-label {
     font-size: var(--text-xs);
@@ -312,7 +234,6 @@ textarea {
     line-height: 1.4;
 }
 
-/* --- New Chat Button --- */
 .btn-new-chat {
     width: 100%;
     padding: var(--space-3) var(--space-4);
@@ -326,22 +247,15 @@ textarea {
     font-family: var(--font-body);
 }
 
-.btn-new-chat:hover {
-    background: var(--color-brand-dark);
-    transform: translateY(-1px);
-}
+.btn-new-chat:hover  { background: var(--color-brand-dark); transform: translateY(-1px); }
+.btn-new-chat:active { transform: translateY(0); }
 
-.btn-new-chat:active {
-    transform: translateY(0);
-}
-
-/* --- Crisis Panel --- */
 .crisis-panel {
     background: var(--color-crisis-bg);
     border: 1px solid rgba(139, 58, 58, 0.25);
     border-radius: var(--radius-md);
     padding: var(--space-4);
-    margin-top: auto; /* Pushes to bottom of sidebar */
+    margin-top: auto;
 }
 
 .crisis-title {
@@ -364,12 +278,8 @@ textarea {
 }
 
 .crisis-link:last-child { border-bottom: none; }
-.crisis-link:hover { color: #ffffff; }
+.crisis-link:hover      { color: #ffffff; }
 
-
-/* ============================================================================
-   SECTION 5: CHAT CONTAINER
-   ============================================================================ */
 .chat-container {
     flex: 1;
     display: flex;
@@ -379,7 +289,6 @@ textarea {
     position: relative;
 }
 
-/* Subtle warm texture overlay on chat area */
 .chat-container::before {
     content: '';
     position: absolute;
@@ -391,7 +300,6 @@ textarea {
     z-index: 0;
 }
 
-/* --- Chat Header --- */
 .chat-header {
     height: var(--header-height);
     display: flex;
@@ -424,9 +332,7 @@ textarea {
     box-shadow: 0 2px 8px rgba(124, 158, 130, 0.3);
 }
 
-.avatar-leaf {
-    font-size: 1.4rem;
-}
+.avatar-leaf { font-size: 1.4rem; }
 
 .status-dot {
     position: absolute;
@@ -463,7 +369,6 @@ textarea {
     transition: color var(--transition-normal);
 }
 
-/* --- Emotion Badge --- */
 .emotion-badge {
     display: flex;
     align-items: center;
@@ -475,9 +380,7 @@ textarea {
     transition: all var(--transition-normal);
 }
 
-.emotion-icon {
-    font-size: var(--text-base);
-}
+.emotion-icon { font-size: var(--text-base); }
 
 .emotion-text {
     font-size: var(--text-xs);
@@ -487,7 +390,6 @@ textarea {
     letter-spacing: 0.02em;
 }
 
-/* --- Message Thread --- */
 .message-thread {
     flex: 1;
     overflow-y: auto;
@@ -500,15 +402,10 @@ textarea {
     scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for chat */
-.message-thread::-webkit-scrollbar { width: 5px; }
+.message-thread::-webkit-scrollbar       { width: 5px; }
 .message-thread::-webkit-scrollbar-track { background: transparent; }
-.message-thread::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 3px;
-}
+.message-thread::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 
-/* --- Message Rows --- */
 .message-row {
     display: flex;
     align-items: flex-end;
@@ -517,21 +414,12 @@ textarea {
 }
 
 @keyframes message-enter {
-    from {
-        opacity: 0;
-        transform: translateY(14px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.message-row.user-row {
-    flex-direction: row-reverse;
-}
+.message-row.user-row { flex-direction: row-reverse; }
 
-/* --- Message Bubbles --- */
 .message-bubble {
     max-width: 70%;
     padding: var(--space-4) var(--space-5);
@@ -542,7 +430,6 @@ textarea {
     word-wrap: break-word;
 }
 
-/* AI bubble */
 .ai-row .message-bubble {
     background: var(--color-ai-bubble);
     color: var(--color-ai-text);
@@ -551,7 +438,6 @@ textarea {
     border: 1px solid var(--color-border);
 }
 
-/* User bubble */
 .user-row .message-bubble {
     background: var(--color-user-bubble);
     color: var(--color-user-text);
@@ -559,7 +445,6 @@ textarea {
     box-shadow: 0 2px 12px rgba(61, 92, 66, 0.25);
 }
 
-/* Message avatar (small circle next to bubble) */
 .message-avatar {
     width: 32px;
     height: 32px;
@@ -571,16 +456,9 @@ textarea {
     font-size: 1rem;
 }
 
-.ai-row .message-avatar {
-    background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%);
-}
+.ai-row .message-avatar   { background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%); }
+.user-row .message-avatar { background: rgba(61, 92, 66, 0.2); }
 
-.user-row .message-avatar {
-    background: var(--color-surface);
-    background: rgba(61, 92, 66, 0.2);
-}
-
-/* Message timestamp */
 .message-meta {
     font-size: 0.68rem;
     color: var(--color-text-muted);
@@ -588,21 +466,17 @@ textarea {
     padding: 0 var(--space-2);
 }
 
-.ai-row .message-meta { text-align: left; }
+.ai-row .message-meta   { text-align: left; }
 .user-row .message-meta { text-align: right; }
 
-/* Welcome message styling */
 .message-bubble.welcome {
-    background: linear-gradient(135deg,
-        rgba(124, 158, 130, 0.12) 0%,
-        rgba(201, 149, 106, 0.08) 100%);
+    background: linear-gradient(135deg, rgba(124, 158, 130, 0.12) 0%, rgba(201, 149, 106, 0.08) 100%);
     border: 1px solid rgba(124, 158, 130, 0.2);
     font-family: var(--font-display);
     font-style: italic;
     color: var(--color-text-secondary);
 }
 
-/* --- Typing Indicator --- */
 .typing-indicator {
     display: flex;
     align-items: center;
@@ -648,7 +522,6 @@ textarea {
     font-style: italic;
 }
 
-/* --- Input Area --- */
 .input-area {
     padding: var(--space-4) var(--space-6) var(--space-5);
     background: rgba(247, 243, 238, 0.95);
@@ -728,24 +601,10 @@ textarea {
     transition: background var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
 }
 
-.send-btn:hover:not(:disabled) {
-    background: var(--color-brand-dark);
-    transform: scale(1.08);
-}
+.send-btn:hover:not(:disabled)  { background: var(--color-brand-dark); transform: scale(1.08); }
+.send-btn:active:not(:disabled) { transform: scale(0.96); }
+.send-btn:disabled               { opacity: 0.35; cursor: not-allowed; }
 
-.send-btn:active:not(:disabled) {
-    transform: scale(0.96);
-}
-
-.send-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
-
-
-/* ============================================================================
-   SECTION 6: TOAST NOTIFICATION
-   ============================================================================ */
 .toast {
     position: fixed;
     bottom: var(--space-8);
@@ -765,17 +624,8 @@ textarea {
 }
 
 .toast[hidden] { display: none; }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.toast.visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-
-/* ============================================================================
-   SECTION 7: EMOTION STATES (dynamic class changes via JS)
-   ============================================================================ */
-/* Each emotion gets a subtle color shift on the emotion badge */
 .emotion-badge.emotion-anxious    { background: rgba(201, 149, 106, 0.12); border-color: rgba(201, 149, 106, 0.3); }
 .emotion-badge.emotion-sad        { background: rgba(106, 139, 201, 0.12); border-color: rgba(106, 139, 201, 0.3); }
 .emotion-badge.emotion-angry      { background: rgba(201, 106, 106, 0.12); border-color: rgba(201, 106, 106, 0.3); }
@@ -784,40 +634,14 @@ textarea {
 .emotion-badge.emotion-overwhelmed{ background: rgba(201, 106, 149, 0.12); border-color: rgba(201, 106, 149, 0.3); }
 .emotion-badge.emotion-grateful   { background: rgba(201, 184, 106, 0.12); border-color: rgba(201, 184, 106, 0.3); }
 
-
-/* ============================================================================
-   SECTION 8: RESPONSIVE DESIGN
-   ============================================================================ */
 @media (max-width: 768px) {
-    .sidebar {
-        display: none; /* Hide sidebar on mobile — accessible via a hamburger menu in v2 */
-    }
-
-    .message-bubble {
-        max-width: 88%;
-    }
-
-    .chat-header {
-        padding: 0 var(--space-4);
-    }
-
-    .message-thread {
-        padding: var(--space-5) var(--space-4);
-    }
-
-    .input-area {
-        padding: var(--space-3) var(--space-4);
-    }
+    .sidebar        { display: none; }
+    .message-bubble { max-width: 88%; }
+    .chat-header    { padding: 0 var(--space-4); }
+    .message-thread { padding: var(--space-5) var(--space-4); }
+    .input-area     { padding: var(--space-3) var(--space-4); }
 }
 
-
-/* ============================================================================
-   SECTION 9: REDUCED MOTION ACCESSIBILITY
-   ACADEMIC NOTE: The `prefers-reduced-motion` media query respects the
-   operating system setting for users who experience discomfort or nausea
-   from animations (e.g., vestibular disorders). WCAG 2.1 Success Criterion
-   2.3.3 (AAA level) requires this. We implement it at AA level as good practice.
-   ============================================================================ */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
