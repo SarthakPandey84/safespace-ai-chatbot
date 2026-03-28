@@ -20,7 +20,7 @@ DB_PATH  = os.path.join(DATA_DIR, 'safespace.db')
 def get_connection():
     if DATABASE_URL:
         import psycopg2
-        conn = psycopg2.connect(https://safespace-dashboard.streamlit.app)
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
     else:
         os.makedirs(DATA_DIR, exist_ok=True)
