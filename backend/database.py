@@ -10,18 +10,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 DB_PATH  = os.path.join(DATA_DIR, 'safespace.db')
 
 
-def get_connection() -> sqlite3.Connection:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL;")
-    return conn
-
+def get_connection():
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    else:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL;")
+        return conn
 
 def initialize_database() -> None:
     logger.info(f"Initializing database at: {DB_PATH}")
