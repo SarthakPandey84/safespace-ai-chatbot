@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("https://safespace-dashboard.streamlit.app")
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -20,7 +20,7 @@ DB_PATH  = os.path.join(DATA_DIR, 'safespace.db')
 def get_connection():
     if DATABASE_URL:
         import psycopg2
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(https://safespace-dashboard.streamlit.app)
         return conn
     else:
         os.makedirs(DATA_DIR, exist_ok=True)
