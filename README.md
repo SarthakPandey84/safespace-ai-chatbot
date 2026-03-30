@@ -1,7 +1,7 @@
 # 🌿 SafeSpace AI
 ### Empathetic, Privacy-First AI Chatbot for Behavioral Research
 
-> *B.Tech Final Year Minor Project — Artificial Intelligence & Data Science*
+> *B.Tech Minor Project — Artificial Intelligence & Data Science*
 
 ---
 
