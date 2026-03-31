@@ -1,8 +1,8 @@
-# Secrets
+# Secrets — NEVER commit these
 .env
 *.env
 
-# User Data / Database
+# User Data & Databases
 data/
 *.db
 *.sqlite
@@ -13,7 +13,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
 build/
 dist/
 *.egg-info/
@@ -25,7 +24,7 @@ env/
 .venv/
 ENV/
 
-# SpaCy Models
+# SpaCy downloaded models
 *.tar.gz
 
 # IDE / Editor
@@ -40,10 +39,10 @@ Thumbs.db
 *.log
 logs/
 
-# Streamlit
+# Streamlit local secrets
 .streamlit/secrets.toml
 
-# Test and debug files
+# Debug / dev scripts (not needed in production)
 test_ai_debug.py
 check_models.py
 fix_parser.py

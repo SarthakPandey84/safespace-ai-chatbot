@@ -1,3 +1,7 @@
+# ──────────────────────────────────────────────
+# SafeSpace AI — Python Dependencies
+# ──────────────────────────────────────────────
+
 # Web Framework & Server
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
@@ -21,5 +25,5 @@ plotly==5.24.1
 # Utilities
 httpx==0.28.1
 
-
-psycopg2-binary==2.9.11
+# Production Database (optional — only needed for Render/cloud deploy)
+# psycopg2-binary==2.9.11

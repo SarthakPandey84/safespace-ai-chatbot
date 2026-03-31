@@ -8,6 +8,6 @@ services:
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: GROQ_API_KEY
-        sync: false
+        sync: false        # Set manually in Render dashboard — never hardcode
       - key: DATABASE_URL
-        sync: false
+        sync: false        # Set manually in Render dashboard
