@@ -83,8 +83,12 @@ async def lifespan(app: FastAPI):
         initialize_database()
         logger.info("✓ Database initialized.")
     except Exception as e:
-        logger.critical(f"✗ Database initialization failed: {e}. Shutting down.")
-        raise
+        logger.critical(
+            f"✗ Database initialization failed: {e}\n"
+            "  Server will start but /chat will fail until DB is reachable.\n"
+            "  Fix: use the Supabase pooler (IPv4) URL in DATABASE_URL env var."
+        )
+        # Do NOT re-raise — server stays up so the issue is diagnosable via /health
 
     logger.info("✓ PrivacyEngine ready (Presidio + SpaCy).")
     logger.info(f"✓ AIEngine ready (Groq: {ai_engine.model_name}).")
