@@ -2,12 +2,12 @@ services:
   - type: web
     name: safespace-ai-backend
     runtime: python
-    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_sm
+    buildCommand: pip install -r requirements.txt && python -m spacy download en_core_web_lg
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: GROQ_API_KEY
-        sync: false        # Set manually in Render dashboard — never hardcode
+        sync: false
       - key: DATABASE_URL
-        sync: false        # Set manually in Render dashboard
+        sync: false
