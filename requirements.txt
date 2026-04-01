@@ -25,5 +25,5 @@ plotly==5.24.1
 # Utilities
 httpx==0.28.1
 
-# Production Database (optional — only needed for Render/cloud deploy)
-# psycopg2-binary==2.9.11
+# PostgreSQL driver — required for Supabase on Render
+psycopg2-binary==2.9.11
