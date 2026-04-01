@@ -1,86 +1,87 @@
 """
 dashboard/dashboard.py
 SafeSpace AI — Research Analytics Dashboard
+
+Reads from Supabase (PostgreSQL) when DATABASE_URL is set,
+falls back to local SQLite for local dev.
+
 Run: streamlit run dashboard/dashboard.py
 """
 
 import os
-import sqlite3
 import time
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# Load .env for local dev
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except ImportError:
+    pass
 
-# IMPORTANT: This path is resolved relative to the project root, not this file.
-# If you run streamlit from a different directory, set DB_PATH to an absolute path.
-DB_PATH = Path(__file__).parent.parent / "data" / "safespace.db"
+DATABASE_URL   = os.getenv("DATABASE_URL")
+USE_POSTGRES   = bool(DATABASE_URL)
+AUTO_REFRESH_S = 10
+SQLITE_PATH    = Path(__file__).parent.parent / "data" / "safespace.db"
 
 EMOTION_COLOURS = {
-    "anxious":     "#f39c12",
-    "sad":         "#3498db",
-    "angry":       "#e74c3c",
-    "hopeful":     "#2ecc71",
-    "lonely":      "#9b59b6",
-    "overwhelmed": "#e67e22",
-    "confused":    "#1abc9c",
-    "numb":        "#95a5a6",
-    "grateful":    "#27ae60",
-    "fearful":     "#c0392b",
-    "ashamed":     "#8e44ad",
-    "frustrated":  "#d35400",
-    "neutral":     "#7f8c8d",
+    "anxious": "#f39c12", "sad": "#3498db", "angry": "#e74c3c",
+    "hopeful": "#2ecc71", "lonely": "#9b59b6", "overwhelmed": "#e67e22",
+    "confused": "#1abc9c", "numb": "#95a5a6", "grateful": "#27ae60",
+    "fearful": "#c0392b", "ashamed": "#8e44ad", "frustrated": "#d35400",
+    "neutral": "#7f8c8d",
 }
 
-AUTO_REFRESH_SECONDS = 10   # dashboard polls the DB every N seconds
+# Columns match the actual chat_logs schema
+QUERY = """
+    SELECT
+        id, session_id, timestamp,
+        user_message_anon,
+        ai_response,
+        emotion,
+        crisis_detected,
+        pii_entities_found,
+        response_latency_ms
+    FROM chat_logs
+    ORDER BY timestamp DESC
+"""
 
 
-# ── Data Loading ──────────────────────────────────────────────────────────────
+# ── Data loading ──────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=AUTO_REFRESH_SECONDS)   # KEY FIX: TTL forces re-query every N seconds
+@st.cache_data(ttl=AUTO_REFRESH_S)
 def load_data() -> pd.DataFrame:
     """
-    Read all chat logs from SQLite.
-
-    FIX NOTES:
-    - check_same_thread=False is required when SQLite is opened outside the
-      thread that created the connection (Streamlit reruns in a fresh thread).
-    - We use a context manager so the connection is closed immediately, which
-      prevents stale data from a cached connection object.
-    - ttl=AUTO_REFRESH_SECONDS on @st.cache_data forces Streamlit to re-run
-      this function periodically so the dashboard shows new rows.
+    Loads all chat logs. TTL forces a fresh DB query every AUTO_REFRESH_S seconds.
+    Opens and closes the connection immediately to avoid stale data.
     """
-    if not DB_PATH.exists():
-        return pd.DataFrame()
-
     try:
-        with sqlite3.connect(str(DB_PATH), check_same_thread=False) as conn:
-            df = pd.read_sql_query(
-                """
-                SELECT
-                    id,
-                    session_id,
-                    timestamp,
-                    user_message_anon   AS user_message,
-                    ai_response,
-                    emotion,
-                    crisis_detected
-                FROM chat_logs
-                ORDER BY timestamp DESC
-                """,
-                conn,
-                parse_dates=["timestamp"],
-            )
-        return df
+        if USE_POSTGRES:
+            import psycopg2
+            import psycopg2.extras
+            conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+            with conn.cursor() as cur:
+                cur.execute(QUERY)
+                rows = cur.fetchall()
+            conn.close()
+            return pd.DataFrame([dict(r) for r in rows])
+
+        else:
+            if not SQLITE_PATH.exists():
+                return pd.DataFrame()
+            import sqlite3
+            with sqlite3.connect(str(SQLITE_PATH), check_same_thread=False) as conn:
+                return pd.read_sql_query(QUERY, conn, parse_dates=["timestamp"])
+
     except Exception as e:
-        st.error(f"Database error: {e}")
+        st.error(f"**Database error:** {e}")
         return pd.DataFrame()
 
 
-# ── Page Setup ────────────────────────────────────────────────────────────────
+# ── Page setup ────────────────────────────────────────────────────────────────
 
 st.set_page_config(
     page_title="SafeSpace AI — Research Dashboard",
@@ -89,184 +90,161 @@ st.set_page_config(
 )
 
 st.title("🌿 SafeSpace AI — Research Dashboard")
-st.caption(
-    f"Showing anonymised data only. Auto-refreshes every {AUTO_REFRESH_SECONDS}s. "
-    f"Database: `{DB_PATH}`"
-)
+db_label = "Supabase (PostgreSQL)" if USE_POSTGRES else f"SQLite @ `{SQLITE_PATH}`"
+st.caption(f"Database: **{db_label}** · Auto-refreshes every {AUTO_REFRESH_S}s")
 
-# Manual refresh button + auto-rerun timer
-col_refresh, col_status = st.columns([1, 4])
-with col_refresh:
-    if st.button("🔄 Refresh now"):
-        st.cache_data.clear()
-        st.rerun()
+# Manual refresh
+if st.button("🔄 Refresh now"):
+    st.cache_data.clear()
+    st.rerun()
 
-# Schedule an automatic rerun so the dashboard stays live
-# (Streamlit will rerun the script after the sleep)
+# Auto-rerun timer
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
-
-if time.time() - st.session_state.last_refresh > AUTO_REFRESH_SECONDS:
+if time.time() - st.session_state.last_refresh > AUTO_REFRESH_S:
     st.session_state.last_refresh = time.time()
     st.cache_data.clear()
     st.rerun()
 
-# ── Load Data ─────────────────────────────────────────────────────────────────
+
+# ── Load & validate data ──────────────────────────────────────────────────────
 
 df = load_data()
 
 if df.empty:
-    st.warning(
-        "No data found. Make sure:\n"
-        "1. The FastAPI backend is running (`uvicorn backend.main:app --reload --port 8000`)\n"
-        "2. You have sent at least one message through the chatbot\n"
-        f"3. The database file exists at: `{DB_PATH}`"
-    )
+    if USE_POSTGRES:
+        st.warning(
+            "**Supabase is empty or unreachable.**\n\n"
+            "Checklist:\n"
+            "1. `DATABASE_URL` is set correctly (in `.env` locally, in Render env vars on production)\n"
+            "2. The `chat_logs` table exists — it is created automatically when FastAPI starts\n"
+            "3. At least one message has been sent through the chatbot\n\n"
+            f"Current URL starts with: `{DATABASE_URL[:40]}...`"
+        )
+    else:
+        st.warning(
+            f"**No local data found.** Expected SQLite at `{SQLITE_PATH}`.\n\n"
+            "Start the FastAPI backend and send a message first."
+        )
     st.stop()
 
-# ── Sidebar Filters ───────────────────────────────────────────────────────────
+# Normalise types
+df["timestamp"]       = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+df["crisis_detected"] = df["crisis_detected"].astype(bool)
+df["emotion"]         = df["emotion"].fillna("neutral").str.lower()
+
+
+# ── Sidebar filters ───────────────────────────────────────────────────────────
 
 st.sidebar.header("Filters")
+emotions    = sorted(df["emotion"].unique().tolist())
+selected    = st.sidebar.multiselect("Emotion", emotions, default=emotions)
+crisis_only = st.sidebar.checkbox("Crisis messages only", value=False)
 
-all_emotions = sorted(df["emotion"].dropna().unique().tolist())
-selected_emotions = st.sidebar.multiselect(
-    "Emotion filter",
-    options=all_emotions,
-    default=all_emotions,
-)
+if selected:
+    df = df[df["emotion"].isin(selected)]
+if crisis_only:
+    df = df[df["crisis_detected"]]
 
-show_crisis = st.sidebar.checkbox("Crisis messages only", value=False)
+if df.empty:
+    st.info("No data matches the current filters.")
+    st.stop()
 
-if selected_emotions:
-    df = df[df["emotion"].isin(selected_emotions)]
 
-if show_crisis:
-    df = df[df["crisis_detected"] == 1]
+# ── KPIs ──────────────────────────────────────────────────────────────────────
 
-# ── KPI Row ───────────────────────────────────────────────────────────────────
+top_emotion  = df["emotion"].mode()[0] if len(df) else "—"
+avg_latency  = df["response_latency_ms"].mean() if "response_latency_ms" in df else 0
+pii_count    = df["pii_entities_found"].notna().sum()
 
-total_msgs      = len(df)
-unique_sessions = df["session_id"].nunique()
-crisis_count    = int(df["crisis_detected"].sum()) if "crisis_detected" in df.columns else 0
-top_emotion     = df["emotion"].mode()[0] if not df["emotion"].isna().all() else "—"
-
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("Total Messages",    total_msgs)
-k2.metric("Unique Sessions",   unique_sessions)
-k3.metric("Crisis Detections", crisis_count)
-k4.metric("Most Common Emotion", top_emotion.capitalize())
+k1, k2, k3, k4, k5 = st.columns(5)
+k1.metric("Total Messages",    len(df))
+k2.metric("Unique Sessions",   df["session_id"].nunique())
+k3.metric("Crisis Detections", int(df["crisis_detected"].sum()))
+k4.metric("Top Emotion",       top_emotion.capitalize())
+k5.metric("Avg Latency (ms)",  f"{avg_latency:.0f}" if avg_latency else "—")
 
 st.divider()
 
+
 # ── Charts ────────────────────────────────────────────────────────────────────
 
-row1_left, row1_right = st.columns(2)
+import plotly.express as px
 
-with row1_left:
+c1, c2 = st.columns(2)
+
+with c1:
     st.subheader("Emotion Distribution")
-    emotion_counts = (
-        df["emotion"]
-        .value_counts()
-        .reset_index()
-        .rename(columns={"index": "emotion", "emotion": "count", "count": "count"})
+    ec = df["emotion"].value_counts().reset_index()
+    ec.columns = ["emotion", "count"]
+    fig = px.pie(
+        ec, names="emotion", values="count",
+        color="emotion", color_discrete_map=EMOTION_COLOURS, hole=0.4,
     )
-    # pandas ≥2 value_counts() returns df with original col name
-    if "emotion" in emotion_counts.columns and emotion_counts.columns.tolist() == ["emotion", "count"]:
-        pass
-    else:
-        emotion_counts.columns = ["emotion", "count"]
+    fig.update_traces(textinfo="label+percent")
+    st.plotly_chart(fig, use_container_width=True)
 
-    fig_pie = px.pie(
-        emotion_counts,
-        names="emotion",
-        values="count",
-        color="emotion",
-        color_discrete_map=EMOTION_COLOURS,
-        hole=0.4,
-    )
-    fig_pie.update_traces(textinfo="label+percent")
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-
-with row1_right:
+with c2:
     st.subheader("Emotion Over Time")
-    if "timestamp" in df.columns and not df["timestamp"].isna().all():
-        df_time = df.copy()
-        df_time["hour"] = df_time["timestamp"].dt.floor("h")
-        time_emotion = (
-            df_time.groupby(["hour", "emotion"])
-            .size()
-            .reset_index(name="count")
-        )
-        fig_line = px.line(
-            time_emotion,
-            x="hour",
-            y="count",
-            color="emotion",
-            color_discrete_map=EMOTION_COLOURS,
-            markers=True,
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-    else:
-        st.info("Timestamp data not available.")
+    tf = df.copy()
+    tf["hour"] = tf["timestamp"].dt.floor("h")
+    td = tf.groupby(["hour", "emotion"]).size().reset_index(name="count")
+    fig2 = px.line(
+        td, x="hour", y="count", color="emotion",
+        color_discrete_map=EMOTION_COLOURS, markers=True,
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
+c3, c4 = st.columns(2)
 
-row2_left, row2_right = st.columns(2)
-
-with row2_left:
+with c3:
     st.subheader("Messages per Session")
-    session_counts = (
-        df.groupby("session_id")
-        .size()
+    sd = (
+        df.groupby("session_id").size()
         .reset_index(name="messages")
         .sort_values("messages", ascending=False)
         .head(20)
     )
-    fig_bar = px.bar(
-        session_counts,
-        x="session_id",
-        y="messages",
-        labels={"session_id": "Session ID (truncated)", "messages": "Message Count"},
-        color="messages",
-        color_continuous_scale="Teal",
+    # Truncate long session IDs for display
+    sd["session_short"] = sd["session_id"].str[:8] + "..."
+    fig3 = px.bar(
+        sd, x="session_short", y="messages",
+        color="messages", color_continuous_scale="Teal",
+        labels={"session_short": "Session"},
     )
-    fig_bar.update_xaxes(tickangle=45, tickfont_size=9)
-    st.plotly_chart(fig_bar, use_container_width=True)
+    st.plotly_chart(fig3, use_container_width=True)
 
-
-with row2_right:
-    st.subheader("Crisis Detection Timeline")
-    if "crisis_detected" in df.columns:
-        crisis_df = df[df["crisis_detected"] == 1].copy()
-        if crisis_df.empty:
-            st.success("No crisis messages detected in selected filters.")
-        else:
-            crisis_df["date"] = crisis_df["timestamp"].dt.date
-            crisis_by_day = crisis_df.groupby("date").size().reset_index(name="count")
-            fig_crisis = px.bar(
-                crisis_by_day,
-                x="date",
-                y="count",
-                color_discrete_sequence=["#e74c3c"],
-                labels={"date": "Date", "count": "Crisis Events"},
-            )
-            st.plotly_chart(fig_crisis, use_container_width=True)
+with c4:
+    st.subheader("Crisis Timeline")
+    cd = df[df["crisis_detected"]].copy()
+    if cd.empty:
+        st.success("No crisis messages in current filter. ✅")
     else:
-        st.info("crisis_detected column not found in database.")
+        cd["date"] = cd["timestamp"].dt.date
+        fig4 = px.bar(
+            cd.groupby("date").size().reset_index(name="count"),
+            x="date", y="count",
+            color_discrete_sequence=["#e74c3c"],
+            labels={"count": "Crisis Events"},
+        )
+        st.plotly_chart(fig4, use_container_width=True)
 
 
-# ── Raw Logs Table ────────────────────────────────────────────────────────────
+# ── Raw logs table ────────────────────────────────────────────────────────────
 
 st.divider()
 st.subheader("📋 Anonymised Chat Logs")
+
+display_cols = ["timestamp", "session_id", "emotion", "crisis_detected",
+                "user_message_anon", "ai_response", "response_latency_ms"]
+display_cols = [c for c in display_cols if c in df.columns]
+
 st.dataframe(
-    df[["timestamp", "session_id", "emotion", "crisis_detected", "user_message", "ai_response"]]
-    .head(200),
+    df[display_cols].head(200),
     use_container_width=True,
     hide_index=True,
 )
-
 st.caption(
-    "⚠️  All user messages shown here have been anonymised by Microsoft Presidio. "
-    "No real names, phone numbers, or emails are stored."
+    "⚠️ All user messages shown here have been anonymised by Microsoft Presidio before storage. "
+    "No real names, phone numbers, emails, or Aadhaar numbers are stored."
 )

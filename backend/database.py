@@ -1,89 +1,147 @@
-import sqlite3
+"""
+backend/database.py
+
+Repository pattern — SQLite (local) vs PostgreSQL/Supabase (production).
+  - DATABASE_URL set   → PostgreSQL / Supabase
+  - DATABASE_URL unset → SQLite at data/safespace.db
+"""
+
 import os
 import logging
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s"
-)
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("https://safespace-dashboard.streamlit.app")
+# ── Environment ───────────────────────────────────────────────────────────────
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-DB_PATH  = os.path.join(DATA_DIR, 'safespace.db')
+DATABASE_URL = os.getenv("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL)
+
+if USE_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
+    logger.info("Database: PostgreSQL / Supabase")
+else:
+    import sqlite3
+    DB_PATH = Path(__file__).parent.parent / "data" / "safespace.db"
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Database: SQLite @ {DB_PATH}")
 
 
-def get_connection():
-    if DATABASE_URL:
-        import psycopg2
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    else:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+# ── Connection helpers ────────────────────────────────────────────────────────
 
-def initialize_database() -> None:
-    logger.info(f"Initializing database at: {DB_PATH}")
-    conn = get_connection()
-
+@contextmanager
+def _pg_conn():
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat_logs (
-                id                      INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id              TEXT NOT NULL,
-                user_message_raw        TEXT NOT NULL,
-                user_message_anonymized TEXT NOT NULL,
-                ai_response             TEXT NOT NULL,
-                detected_emotion        TEXT,
-                pii_entities_found      TEXT,
-                response_latency_ms     INTEGER,
-                timestamp               TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS session_metrics (
-                session_id          TEXT PRIMARY KEY,
-                total_turns         INTEGER DEFAULT 0,
-                dominant_emotion    TEXT,
-                session_start       TEXT NOT NULL DEFAULT (datetime('now')),
-                last_active         TEXT NOT NULL DEFAULT (datetime('now')),
-                total_pii_detected  INTEGER DEFAULT 0
-            );
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chat_logs_session_id
-            ON chat_logs(session_id);
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chat_logs_timestamp
-            ON chat_logs(timestamp);
-        """)
-
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chat_logs_emotion
-            ON chat_logs(detected_emotion);
-        """)
-
+        yield conn
         conn.commit()
-        logger.info("Database initialized successfully. All tables and indexes are ready.")
-
-    except sqlite3.Error as e:
-        logger.error(f"CRITICAL: Database initialization failed: {e}")
+    except Exception:
+        conn.rollback()
         raise
     finally:
         conn.close()
+
+
+@contextmanager
+def _sqlite_conn():
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _conn():
+    return _pg_conn() if USE_POSTGRES else _sqlite_conn()
+
+
+def _exec(conn, sql, params=()):
+    if USE_POSTGRES:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+    else:
+        conn.execute(sql, params)
+
+
+def _fetchall(conn, sql, params=()):
+    if USE_POSTGRES:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            return [dict(r) for r in cur.fetchall()]
+    else:
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
+
+
+def _fetchone(conn, sql, params=()):
+    if USE_POSTGRES:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            row = cur.fetchone()
+            return dict(row) if row else None
+    else:
+        row = conn.execute(sql, params).fetchone()
+        return dict(row) if row else None
+
+
+# ── Schema ────────────────────────────────────────────────────────────────────
+
+_PG_SCHEMA = """
+CREATE TABLE IF NOT EXISTS chat_logs (
+    id                    SERIAL PRIMARY KEY,
+    session_id            TEXT        NOT NULL,
+    timestamp             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_message_raw      TEXT        NOT NULL,
+    user_message_anon     TEXT        NOT NULL,
+    ai_response           TEXT        NOT NULL,
+    emotion               TEXT,
+    pii_entities_found    TEXT,
+    response_latency_ms   INTEGER,
+    crisis_detected       BOOLEAN     NOT NULL DEFAULT FALSE
+);
+"""
+
+_SQLITE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS chat_logs (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id            TEXT    NOT NULL,
+    timestamp             TEXT    NOT NULL,
+    user_message_raw      TEXT    NOT NULL,
+    user_message_anon     TEXT    NOT NULL,
+    ai_response           TEXT    NOT NULL,
+    emotion               TEXT,
+    pii_entities_found    TEXT,
+    response_latency_ms   INTEGER,
+    crisis_detected       INTEGER NOT NULL DEFAULT 0
+);
+"""
+
+_CRISIS_KEYWORDS = [
+    "kill myself", "want to die", "harm myself", "hurt myself",
+    "end it all", "not want to live", "better off without me",
+    "want to disappear", "take my own life", "ending my life",
+]
+
+
+# ── Public functions (imported by main.py) ────────────────────────────────────
+
+def initialize_database() -> None:
+    """Create tables if they don't exist. Called once at FastAPI startup."""
+    schema = _PG_SCHEMA if USE_POSTGRES else _SQLITE_SCHEMA
+    try:
+        with _conn() as conn:
+            _exec(conn, schema)
+        logger.info("✅ Database initialised.")
+    except Exception as e:
+        logger.error(f"❌ Database init failed: {e}")
+        raise
 
 
 def log_chat_turn(
@@ -91,171 +149,169 @@ def log_chat_turn(
     user_message_raw:        str,
     user_message_anonymized: str,
     ai_response:             str,
-    detected_emotion:        Optional[str],
-    pii_entities_found:      Optional[str],
-    response_latency_ms:     Optional[int]
-) -> int:
-    conn      = get_connection()
-    new_row_id = -1
-    pii_count  = len(pii_entities_found.split(',')) if pii_entities_found else 0
+    detected_emotion:        str,
+    pii_entities_found:      str | None,
+    response_latency_ms:     int,
+) -> int | None:
+    """Insert one anonymised chat log row. Returns new row id."""
+    crisis = any(kw in user_message_raw.lower() for kw in _CRISIS_KEYWORDS)
+    timestamp = datetime.utcnow().isoformat()
+
+    if USE_POSTGRES:
+        sql = """
+            INSERT INTO chat_logs
+                (session_id, timestamp, user_message_raw, user_message_anon,
+                 ai_response, emotion, pii_entities_found, response_latency_ms, crisis_detected)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """
+        params = (session_id, timestamp, user_message_raw, user_message_anonymized,
+                  ai_response, detected_emotion, pii_entities_found, response_latency_ms, crisis)
+    else:
+        sql = """
+            INSERT INTO chat_logs
+                (session_id, timestamp, user_message_raw, user_message_anon,
+                 ai_response, emotion, pii_entities_found, response_latency_ms, crisis_detected)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        params = (session_id, timestamp, user_message_raw, user_message_anonymized,
+                  ai_response, detected_emotion, pii_entities_found, response_latency_ms, int(crisis))
 
     try:
-        with conn:
-            cursor = conn.cursor()
+        with _conn() as conn:
+            if USE_POSTGRES:
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    row = cur.fetchone()
+                    new_id = dict(row)["id"] if row else None
+            else:
+                cur = conn.execute(sql, params)
+                new_id = cur.lastrowid
 
-            cursor.execute("""
-                INSERT INTO chat_logs (
-                    session_id, user_message_raw, user_message_anonymized,
-                    ai_response, detected_emotion, pii_entities_found,
-                    response_latency_ms, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                session_id,
-                user_message_raw,
-                user_message_anonymized,
-                ai_response,
-                detected_emotion,
-                pii_entities_found,
-                response_latency_ms,
-                datetime.utcnow().isoformat()
-            ))
+        logger.info(
+            f"✅ Logged — id={new_id} session={session_id[:8]} "
+            f"emotion={detected_emotion} crisis={crisis}"
+        )
+        return new_id
 
-            new_row_id = cursor.lastrowid
-            logger.info(f"Chat log inserted: row_id={new_row_id}, session={session_id[:8]}...")
-
-            cursor.execute("""
-                INSERT INTO session_metrics (
-                    session_id, total_turns, dominant_emotion,
-                    session_start, last_active, total_pii_detected
-                ) VALUES (?, 1, ?, datetime('now'), datetime('now'), ?)
-
-                ON CONFLICT(session_id) DO UPDATE SET
-                    total_turns        = total_turns + 1,
-                    dominant_emotion   = excluded.dominant_emotion,
-                    last_active        = datetime('now'),
-                    total_pii_detected = total_pii_detected + ?
-            """, (
-                session_id,
-                detected_emotion,
-                pii_count,
-                pii_count
-            ))
-
-        logger.info(f"Session metrics upserted for session={session_id[:8]}...")
-        return new_row_id
-
-    except sqlite3.Error as e:
-        logger.error(f"Database write failed for session {session_id[:8]}: {e}")
+    except Exception as e:
+        logger.error(f"❌ log_chat_turn failed: {e}")
         raise
-    finally:
-        conn.close()
 
 
-def get_all_chat_logs(limit: int = 1000) -> list[dict]:
-    conn = get_connection()
+def get_all_chat_logs(limit: int = 100) -> list[dict]:
+    sql = (
+        "SELECT * FROM chat_logs ORDER BY timestamp DESC LIMIT %s"
+        if USE_POSTGRES else
+        "SELECT * FROM chat_logs ORDER BY timestamp DESC LIMIT ?"
+    )
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                id, session_id, user_message_anonymized,
-                ai_response, detected_emotion, pii_entities_found,
-                response_latency_ms, timestamp
-            FROM chat_logs
-            ORDER BY timestamp DESC
-            LIMIT ?
-        """, (limit,))
-        rows = [dict(row) for row in cursor.fetchall()]
-        logger.info(f"Fetched {len(rows)} chat log records for dashboard.")
+        with _conn() as conn:
+            rows = _fetchall(conn, sql, (limit,))
+        for r in rows:
+            if "timestamp" in r and hasattr(r["timestamp"], "isoformat"):
+                r["timestamp"] = r["timestamp"].isoformat()
         return rows
-    except sqlite3.Error as e:
-        logger.error(f"Failed to fetch chat logs: {e}")
+    except Exception as e:
+        logger.error(f"❌ get_all_chat_logs failed: {e}")
         return []
-    finally:
-        conn.close()
 
 
 def get_all_session_metrics() -> list[dict]:
-    conn = get_connection()
+    sql = """
+        SELECT
+            session_id,
+            COUNT(*)                                          AS turn_count,
+            MIN(timestamp)                                    AS first_message,
+            MAX(timestamp)                                    AS last_message,
+            SUM(CASE WHEN crisis_detected THEN 1 ELSE 0 END) AS crisis_count,
+            AVG(response_latency_ms)                          AS avg_latency_ms
+        FROM chat_logs
+        GROUP BY session_id
+        ORDER BY last_message DESC
+    """
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                session_id, total_turns, dominant_emotion,
-                session_start, last_active, total_pii_detected
-            FROM session_metrics
-            ORDER BY last_active DESC
-        """)
-        rows = [dict(row) for row in cursor.fetchall()]
-        logger.info(f"Fetched {len(rows)} session metric records for dashboard.")
+        with _conn() as conn:
+            rows = _fetchall(conn, sql)
+        for r in rows:
+            for k in ("first_message", "last_message"):
+                if k in r and hasattr(r[k], "isoformat"):
+                    r[k] = r[k].isoformat()
+            if r.get("avg_latency_ms") is not None:
+                r["avg_latency_ms"] = round(float(r["avg_latency_ms"]), 1)
         return rows
-    except sqlite3.Error as e:
-        logger.error(f"Failed to fetch session metrics: {e}")
+    except Exception as e:
+        logger.error(f"❌ get_all_session_metrics failed: {e}")
         return []
-    finally:
-        conn.close()
 
 
 def get_emotion_distribution() -> list[dict]:
-    conn = get_connection()
+    sql = """
+        SELECT emotion, COUNT(*) AS count
+        FROM chat_logs
+        WHERE emotion IS NOT NULL
+        GROUP BY emotion
+        ORDER BY count DESC
+    """
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                COALESCE(detected_emotion, 'unknown') AS emotion,
-                COUNT(*) as count
-            FROM chat_logs
-            WHERE detected_emotion IS NOT NULL
-            GROUP BY detected_emotion
-            ORDER BY count DESC
-        """)
-        rows = [dict(row) for row in cursor.fetchall()]
-        return rows
-    except sqlite3.Error as e:
-        logger.error(f"Failed to fetch emotion distribution: {e}")
+        with _conn() as conn:
+            return _fetchall(conn, sql)
+    except Exception as e:
+        logger.error(f"❌ get_emotion_distribution failed: {e}")
         return []
-    finally:
-        conn.close()
 
 
 def get_daily_activity() -> list[dict]:
-    conn = get_connection()
+    sql = """
+        SELECT DATE(timestamp) AS date, COUNT(*) AS message_count
+        FROM chat_logs
+        GROUP BY DATE(timestamp)
+        ORDER BY date DESC
+        LIMIT 30
+    """
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                DATE(timestamp) AS date,
-                COUNT(*) AS message_count
-            FROM chat_logs
-            GROUP BY DATE(timestamp)
-            ORDER BY date ASC
-        """)
-        rows = [dict(row) for row in cursor.fetchall()]
+        with _conn() as conn:
+            rows = _fetchall(conn, sql)
+        for r in rows:
+            if "date" in r and hasattr(r["date"], "isoformat"):
+                r["date"] = r["date"].isoformat()
         return rows
-    except sqlite3.Error as e:
-        logger.error(f"Failed to fetch daily activity: {e}")
+    except Exception as e:
+        logger.error(f"❌ get_daily_activity failed: {e}")
         return []
-    finally:
-        conn.close()
 
 
 def get_summary_stats() -> dict:
-    conn = get_connection()
+    sql = """
+        SELECT
+            COUNT(DISTINCT session_id)     AS total_sessions,
+            COUNT(*)                       AS total_messages,
+            AVG(response_latency_ms)       AS avg_latency_ms,
+            SUM(CASE WHEN pii_entities_found IS NOT NULL
+                      AND pii_entities_found != ''
+                     THEN 1 ELSE 0 END)    AS total_pii_scrubbed
+        FROM chat_logs
+    """
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                (SELECT COUNT(DISTINCT session_id) FROM chat_logs)       AS total_sessions,
-                (SELECT COUNT(*) FROM chat_logs)                          AS total_messages,
-                (SELECT ROUND(AVG(total_turns), 1) FROM session_metrics)  AS avg_turns_per_session,
-                (SELECT ROUND(AVG(response_latency_ms), 0)
-                    FROM chat_logs
-                    WHERE response_latency_ms IS NOT NULL)                AS avg_latency_ms,
-                (SELECT SUM(total_pii_detected) FROM session_metrics)     AS total_pii_scrubbed
-        """)
-        row = cursor.fetchone()
-        return dict(row) if row else {}
-    except sqlite3.Error as e:
-        logger.error(f"Failed to fetch summary stats: {e}")
+        with _conn() as conn:
+            row = _fetchone(conn, sql)
+        if not row:
+            return {}
+        total_s = int(row.get("total_sessions") or 0)
+        total_m = int(row.get("total_messages") or 0)
+        return {
+            "total_sessions":        total_s,
+            "total_messages":        total_m,
+            "avg_turns_per_session": round(total_m / total_s, 2) if total_s else 0.0,
+            "avg_latency_ms":        round(float(row.get("avg_latency_ms") or 0), 1),
+            "total_pii_scrubbed":    int(row.get("total_pii_scrubbed") or 0),
+        }
+    except Exception as e:
+        logger.error(f"❌ get_summary_stats failed: {e}")
         return {}
-    finally:
-        conn.close()
+
+
+# ── Aliases for any legacy references ────────────────────────────────────────
+init_db       = initialize_database
+save_chat_log = log_chat_turn
+get_all_logs  = get_all_chat_logs
