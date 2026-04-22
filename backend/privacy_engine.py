@@ -2,8 +2,7 @@
 backend/privacy_engine.py
 
 Presidio-based PII anonymization engine.
-Tries en_core_web_lg first (best accuracy), falls back to en_core_web_sm
-so the app works on both local and Render environments.
+Uses en_core_web_sm model.
 """
 
 import logging
@@ -35,8 +34,6 @@ class PrivacyEngine:
         "IN_PAN", "IN_AADHAAR", "IN_VOTER", "IN_PASSPORT",
     ]
 
-    # Common Indian first names for keyword-based fallback detection.
-    # Presidio's small SpaCy model frequently misses Indian names.
     INDIAN_NAMES = [
         "aarav","aditya","akash","amit","ananya","anjali","ankit","ansh",
         "arjun","aryan","ayaan","deepak","devansh","dhruv","divya","gaurav",
@@ -52,12 +49,9 @@ class PrivacyEngine:
         import time
         t0 = time.time()
 
-        # Try lg model first, fall back to sm
-        model_name = self._load_best_model()
-
         nlp_config = {
             "nlp_engine_name": "spacy",
-            "models": [{"lang_code": "en", "model_name": model_name}],
+            "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
         }
         provider       = NlpEngineProvider(nlp_configuration=nlp_config)
         nlp_engine_obj = provider.create_engine()
@@ -67,21 +61,7 @@ class PrivacyEngine:
 
         self.anonymizer = AnonymizerEngine()
         elapsed = round((time.time() - t0) * 1000)
-        logger.info(f"PrivacyEngine ready — model={model_name}, init={elapsed}ms")
-
-    def _load_best_model(self) -> str:
-        """Try en_core_web_lg first; fall back to en_core_web_sm."""
-        import spacy
-        for model in ("en_core_web_lg", "en_core_web_sm"):
-            try:
-                spacy.load(model)
-                logger.info(f"SpaCy model loaded: {model}")
-                return model
-            except OSError:
-                logger.warning(f"SpaCy model not found: {model}")
-        raise RuntimeError(
-            "No SpaCy model found. Run: python -m spacy download en_core_web_lg"
-        )
+        logger.info(f"PrivacyEngine ready — model=en_core_web_sm, init={elapsed}ms")
 
     def _add_custom_recognizers(self) -> None:
         """Add India-specific and name-pattern recognizers."""
@@ -104,11 +84,11 @@ class PrivacyEngine:
             ],
         ))
 
-        # Common Indian first names (keyword list — catches what SpaCy misses)
+        # Common Indian first names (keyword list — compensates for sm model's weaker NER)
         self.analyzer.registry.add_recognizer(PatternRecognizer(
             supported_entity="PERSON",
             deny_list=self.INDIAN_NAMES,
-            deny_list_score=0.6,     # lower than SpaCy's NER so NER takes precedence
+            deny_list_score=0.6,
         ))
 
         # "my name is X" / "I am X" / "call me X" pattern
